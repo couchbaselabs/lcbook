@@ -638,7 +638,7 @@ perform network I/O to retrieve the initial map.
 The goal of this feature is to limit the number of initial connections for
 retrieving the cluster map, as well as to reduce latency for performing simple
 operations. Such a usage is ideal for short lived applications which are spawned
-as simple scripts (i.e. CGI).
+as simple scripts (e.g. PHP scripts).
 
 To use the configuration cache you must use a special form of initialization:
 
@@ -979,7 +979,7 @@ Read the callback documentation carefully for each of the APIs to see how
 to handle the received callbacks.
 
 
-### HTTP and Views Functionality
+### Views Queries
 In addition to the _memcached_ protocol, this library also provides the ability
 to issue HTTP queries. HTTP queries may be issued to port _8092_ and require
 a path.
@@ -1193,7 +1193,8 @@ storage_callback(
 The API for the structures may be found in `<libcouchbase/durability.h>`.
 
 The basic use model is to schedule a durability poll right after the item
-has been stored. The `lcb_durability_opts_t` structure defines the parameters
+has been stored (for example, within a successful store callback).
+The `lcb_durability_opts_t` structure defines the parameters
 for the persistence and replication requirements. You can define these to
 contain the minimum number of nodes you wish the item to be persisted
 and replicated to. Note that the maximum number of nodes you may persist
@@ -1350,6 +1351,10 @@ void schedule_observe()
 	}
 	lcb_wait(instance);	
 }
+
+Note that using the `LCB_OBSERVE_MASTER` option will **only contact the master**
+node, and will not contact any replica.
+and as such will only send out a single packet to the cluster.
 ```
 
 Note that you will still receive two callbacks; one which contains the reply
