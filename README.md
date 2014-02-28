@@ -1447,14 +1447,16 @@ io_cropts.version = 0;
 io_cropts.type = LCB_IO_OPS_LIBEV;
 err = lcb_create_io_ops(&io, &io_cropts);
 if (err != LCB_SUCCESS) {
-	die("Couldn't create IO structure", err);}
+	die("Couldn't create IO structure", err);
+}
 memset(&cropts, 0, sizeof(cropts));
 cropts.v.v0.io = io;
 /** Initialize more fields here */
 err = lcb_create(&instance, &cropts);
 
 if (err != LCB_SUCCESS) {
-	die("Failed to initialize instance!\n");}
+	die("Failed to initialize instance!\n");
+}
 ```
 
 Be sure to check the error return value from `lcb_create_io_ops`. Specifically
@@ -1498,14 +1500,17 @@ the library shall select:
 struct lcb_create_io_ops_st io_cropts = { 0 };
 struct lcb_cntl_iops_info_st io_info = { 0 };
 io_info.v.v0.options = &io_cropts;
+
 lcb_error_t err;
 
 err = lcb_cntl(NULL, LCB_CNTL_GET, LCB_CNTL_IOPS_DEFAULT_TYPES, &io_info);
 if (err != LCB_SUCCESS) {
-	die("Couldn't get I/O defaults", err);}
+	die("Couldn't get I/O defaults", err);
+}
 printf("Default IO For platform is %d\n", io_info.v.v0.os_default);
 printf("Effective IO (after options and environment) is %d\n",
 		io_info.v.v0.effective);
+
 ```
 
 The `os_default` shows the platform default which is determined when
@@ -1551,6 +1556,7 @@ struct lcb_create_io_opt_t io_cropts = { 0 };
 struct event_base *evbase = event_base_new();
 io_cropts.v.v0.type = LCB_IO_OPS_LIBEVENT;
 io_cropts.v.v0.cookie = evbase;
+
 ```
 
 The plugin will _not_ free the `event_base` structure, so be sure to free it
@@ -1573,6 +1579,7 @@ ev_loop *loop;
 loop = ev_default_loop(0);
 io_cropts.v.v0.type = LCB_IO_OPS_LIBEV;
 io_cropts.v.v0.cookie = loop;
+
 ```
 
 ##### Configuring the _libuv_ backend for Async Operation
