@@ -505,7 +505,8 @@ struct lcb_create_st crparams = { 0 };
 
 lcb_config_transport transports[] = {
 	LCB_CONFIG_TRANSPORT_CCCP,
-	LCB_CONFIG_TRANSPORT_LIST_END};
+	LCB_CONFIG_TRANSPORT_LIST_END
+};
 
 /** Requires version 2 */
 cparams.version = 2;
@@ -514,6 +515,7 @@ crparams.v.v2.host = "foo.com;bar.org;baz.net";
 
 lcb_t instance;
 lcb_create(&instance, &crparams);
+
 ```
 
 The `transports` field accept an array of "enabled transports" followed by the
@@ -631,7 +633,8 @@ cacheinfo.createopt.v.v0.host = "foo.com";
 
 err = lcb_create_compat(LCB_CACHED_CONFIG, &cacheinfo, &instance, NULL);
 if (err != LCB_SUCCESS) {
-	die("Couldn't create cached info", err)}
+	die("Couldn't create cached info", err)
+}
 ```
 
 If the cache file does not exist, the client will bootstrap from the network
@@ -643,8 +646,10 @@ You may check to see if the client has loaded a configuration from the cache
 int is_loaded = 0;
 lcb_cntl(instance, LCB_CNTL_GET, LCB_CNTL_CONFIG_CACHE_LOADED, &is_loaded);
 if (is_loaded) {
-	printf("Configuration cache file loaded OK\n");} else {
-	printf("Configuration cache likely does not exist yet\n");}
+	printf("Configuration cache file loaded OK\n");
+} else {
+	printf("Configuration cache likely does not exist yet\n");
+}
 ```
 
 > _Memcached_ buckets are not supported with the configuration cache
@@ -853,12 +858,14 @@ for (ii = 0; ii < NUM_COMMANDS; ii++) {
 	cmds[ii].v.v0.bytes = vbuf;
 	cmds[ii].v.v0.nbytes = strlen(vbuf);
 	cmds[ii].v.v0.operation = LCB_SET;
-	cmdlist[ii] = &cmds[ii];}
+	cmdlist[ii] = &cmds[ii];
+}
 
 err = lcb_store(instance, NULL, NUM_COMMANDS, cmdlist);
 for (ii = 0; ii < NUM_COMMANDS; ii++) {
 	free(cmds[ii].v.v0.key);
-	free(cmds[ii].v.v0.bytes);}
+	free(cmds[ii].v.v0.bytes);
+}
 lcb_wait(instance);
 ```
 
@@ -882,12 +889,14 @@ for (ii = 0; ii < NUM_COMMANDS; ii++) {
 	lcb_store_cmd_t cmd = { 0 }, *cmdp = &cmd;
 	
 	sprintf(kbuf, "Key_%d", ii);
-	sprintf(vbuf, "Value_%d", ii);	cmd.v.v0.key = kbuf;
+	sprintf(vbuf, "Value_%d", ii);
+	cmd.v.v0.key = kbuf;
 	cmd.v.v0.nkey = strlen(kbuf);
 	cmd.v.v0.bytes = vbuf;
 	cmd.v.v0.nbytes = strlen(vbuf);
 	cmd.v.v0.operation = LCB_SET;
-	err = lcb_store(instance, NULL, 1, (const lcb_store_cmd_t * const *)&cmdp);}
+	err = lcb_store(instance, NULL, 1, (const lcb_store_cmd_t * const *)&cmdp);
+}
 lcb_wait(instance);
 ```
 
@@ -985,7 +994,9 @@ err = lcb_make_http_request(
 	&htreq);
 	
 if (err != LCB_SUCCESS) {
-	die("Couldn't schedule HTTP request", err);}
+	die("Couldn't schedule HTTP request", err);
+}
+
 ```
 
 And the callbacks:
@@ -1001,17 +1012,22 @@ http_complete(
 {
 	const char **curhdr;
 	if (err != LCB_SUCCESS) {
-		die("Got fatal error for request", err);	}
+		die("Got fatal error for request", err);
+	}
 	
 	if (resp->v.v0.status < 200 || resp->v.v0.status > 299) {
 		fprintf(stderr, "Got non-success HTTP status: %d\n",
-				resp->v.v0.status);	}
+				resp->v.v0.status);
+	}
 	
 	for (curhdr = resp->v.v0.headers; *curhdr; curhdr += 2) {
-		printf("Got HTTP Header %s: %s\n", curhdr[0], curhdr[1])	}
+		printf("Got HTTP Header %s: %s\n", curhdr[0], curhdr[1])
+	}
 	if (resp->v.v0.nbytes) {
 		fprintf(stderr, "Got %.*s for response body",
-				(int)resp->v.v0.nbytes, resp->v.v0.bytes);	}}
+				(int)resp->v.v0.nbytes, resp->v.v0.bytes);
+	}
+}
 ```
 
 The `http_complete` callback is invoked when the HTTP response is
@@ -1026,7 +1042,8 @@ network or timeout error. The second condition is a negative status
 reply by the HTTP server itself.
 
 Also provided with the response is a list of headers inside a `char**`
-array. The char array is structure in the form of `{ "header", "value"}` and so on, so iterate over the array incrementing
+array. The char array is structure in the form of 
+`{ "header", "value"}` and so on, so iterate over the array incrementing
 the current element by two each time.
 
 #### Error Handling
@@ -1115,7 +1132,8 @@ durability_callback(
 	const lcb_durability_resp_t *res)
 {
 	if (err != LCB_SUCCESS) {
-		die("Response was not successful for durability", err);	}
+		die("Response was not successful for durability", err);
+	}
 	printf("Exists on master?\n", res->v.v0.exists_master);
 	printf("Item persisted to %d nodes\n", res->v.v0.npersisted);
 	printf("Item replicated to %d nodes\n", res->v.v0.nreplicated);
@@ -1136,7 +1154,8 @@ storage_callback(
 	lcb_durability_cmd_t cmd = { 0 }, *cmdp = &cmd;
 	
 	if (err != LCB_SUCCESS) {
-		die("Got error in store callback", err);	}
+		die("Got error in store callback", err);
+	}
 
 	cmd.v.v0.key = resp->v.v0.key;
 	cmd.v.v0.nkey = resp->v.v0.nkey;
@@ -1217,18 +1236,22 @@ observe_callback(
 {
 	
 	if (err != LCB_SUCCESS) {
-		die("Observe failed", err);	}
+		die("Observe failed", err);
+	}
 	
 	if (!resp->v.v0.nkey) {
 		/**
 		 * We get an indeterminate number of callbacks. The final
 		 * callback will always contain 0 for nkey and/or NULL for key
 		 */
-		printf("Got final null callback for %p.\n", cookie);	}
+		printf("Got final null callback for %p.\n", cookie);
+	}
 	
 	if (resp->v.v0.from_master) {
-		printf("Got reply from master\n");	} else {
-		printf("Got reply from replica\n");	}
+		printf("Got reply from master\n");
+	} else {
+		printf("Got reply from replica\n");
+	}
 	
 	printf("Got raw status code 0x%x\n", resp->v.v0.status);
 	printf("Got raw CAS 0x" PRIX64 "\n", resp->v.v0.cas);
@@ -1240,7 +1263,8 @@ observe_callback(
 	}
 	
 	if (resp->v.v0.status & LCB_OBSEVE_PERSISTED) {
-		printf("Key is persisted on disk\n");	}
+		printf("Key is persisted on disk\n");
+	}
 	
 	if (resp->v.v0.status & LCB_OBSERVE_NOT_FOUND) {
 		printf("Key does not exist in cache\n");
@@ -1250,7 +1274,9 @@ observe_callback(
 		 * exist on the disk while being logically purged from cache
 		 */
 		if (resp->v.v0.status & LCB_OBSERVE_PERSISTED) {
-			printf("But key is still awaiting deletion from disk\n");		}	}
+			printf("But key is still awaiting deletion from disk\n");
+		}
+	}
 }
 
 void
@@ -1260,8 +1286,10 @@ schedule_observe()
 	lcb_error_t err;
 	
 	cmd.v.v0.key = "foo";
-	cmd.v.v0.nkey = 3;	err = lcb_observe(instance, NULL, 1, &cmdp);
-	lcb_wait(instance);}
+	cmd.v.v0.nkey = 3;
+	err = lcb_observe(instance, NULL, 1, &cmdp);
+	lcb_wait(instance);
+}
 ```
 
 The response callback for the `lcb_observe()` call deserves most detail. A
@@ -1297,8 +1325,10 @@ void schedule_observe()
 	cmd.v.v1.options = LCB_OBSERVE_MASTER_ONLY;
 	err = lcb_observe(instance, NULL, 1, &cmdp);
 	if (err != LCB_SUCCESS) {
-		die("Couldn't schedule observe request", err);	}
-	lcb_wait(instance);	}
+		die("Couldn't schedule observe request", err);
+	}
+	lcb_wait(instance);	
+}
 ```
 
 Note that you will still receive two callbacks; one which contains the reply
