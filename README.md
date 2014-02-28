@@ -1,13 +1,13 @@
 // vim: set noexpandtab:
 # libcouchbase - The C Couchbase Client Library
 	
-The C library provides an interface to the Couchbase Cluster from a C
-application.  It is used by many of our client libraries as lower layer which
-performs network I/O and protocol handling. It may also be used as a standalone
-client.
+The Couchbase C client library provides an interface to the Couchbase Cluster
+from a C application.  It is used by many of our client libraries as lower
+layer which performs network I/O and protocol handling. It may also be used
+as a standalone client.
 
 The library is known to function on Linux, Mac OS X and Windows.  Other
-platforms may be work but are not routinely tested.
+platforms may work but are not routinely tested.
 
 The library tries to be conforming to the _C89_ standard ("ANSI C") and as such
 should build with any C compiler.
@@ -119,7 +119,7 @@ lcb_store_cmd_t cmd = { 0 }, *cmdlist = &cmd;
 
 /** Buffer and size to use for the key */
 cmd.v.v0.key = "Hello";
-cmd.v.v0.nkey = 5;
+cmd.v.v0.nkey = strlen((const char *)cmd.v.v0.key);
 
 /** Buffer and size to use for the value */
 cmd.v.v0.bytes = "World!";
@@ -222,10 +222,30 @@ be found inside the `<libcouchbase/error.h>` header.
 
 In order to handle the errors properly, the application and developer must
 understand what the errors mean and whether they indicate a retriable or fatal
-error. In general a retriable error indicates that the failure was transient
-and that it may be recoverable in some point in the future, while a fatal error
-indicates more severe issues that would likely not be alleviated unless some
-other action was taken.
+error.
+
+Examples of _transient_ errors include timeout errors or temporary
+failures such as `LCB_ETIMEDOUT` (took too long to get a reply),
+or `LCB_ETMPFAIL` (server was too busy). Examples of _fatal_ errors include
+`LCB_AUTH_ERROR` (authentication failed) or `LCB_BUCKET_ENOENT`
+(bucket does not exist).
+
+The distinguishing factor between a fatal and transient error is that a fatal
+error would require external intervention (possibly reconfiguring the client
+or cluster manually) whereas a transient error does not typically require
+intervention as it may be caused by temporary load issues. However depending
+on environmental factors an excessive amount of transient errors received over
+a prolonged duration of time may also indicate a need for external intervention.
+
+In the examples above, an `LCB_ETIMEDOUT` error indicates a degree of load
+on either the server or the network. The load would typically be temporary -
+perhaps it is caused by an unusual spike in traffic on an application server
+and the `LCB_ETIMEDOUT` errors will likely disappear once the load returns to
+normal. On the other hand, a wrong password or bucket name (`LCB_AUTH_ERROR`
+and `LCB_BUCKET_ENOENT`) are typically not load related and are more likely
+caused by a misconfigured client (bucket name or password was spelled wrong)
+or an administrative issue (bucket password was suddenly changed, or bucket
+was deleted).
 
 The `lcb_errflags_t` enumeration defines a set of flags which are associated
 with each error code. These flags define the _type_ of error e.g.
