@@ -475,10 +475,10 @@ then place the serialized request into that node's socket buffer.
 During cluster topology changes, the client may receive or request
 configuration updates multiple times. These updates typically reflect a vBucket
 being moved to another node.  During these changes it will also happen that the
-client will happen to forward data to the wrong server and may internally retry
+client may forward data to the wrong server and can internally retry
 operations several times.
 
-For servers until 2.5 the only way to retrieve the cluster configuration was
+For servers before 2.5 the only way to retrieve the cluster configuration was
 via the HTTP REST API endpoint. The client would make a request to
 `/pools/default/bucketStreaming/$bucket` and receive a sequence of
 configuration information encoded as a JSON payload. (`$bucket` here means the
@@ -502,7 +502,8 @@ what is called **C**luster **C**onfiguration **C**arrier **P**ublication, or
 _CCCP_) as well as via the legacy mode which utilizes a connection to the REST
 API.
 
-Note that `CCCP` is available only in cluster versions 2.5 and higher.
+Note that `CCCP` is available only in cluster versions 2.5 and higher and
+LCB versions 2.3 and higher.
 
 The default behavior of the library is to first attempt bootstrap over `CCCP`
 and then fallback to HTTP if the former fails. `CCCP` bootstrap is preferrable
@@ -538,7 +539,7 @@ lcb_create(&instance, &crparams);
 
 ```
 
-The `transports` field accept an array of "enabled transports" followed by the
+The `transports` field accepts an array of "enabled transports" followed by the
 end-of-list element (`LCB_CONFIG_TRANSPORT_LIST_END`). If this parameter is
 specified then the library will _only_ use the transports in the list which are
 specified.
