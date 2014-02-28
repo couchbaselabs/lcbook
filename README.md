@@ -453,7 +453,7 @@ only makes sense during the initial connection and has no effect threafter.
 An additional timeout setting is the per-node bootstrap timeout. When fetching
 the cluster configuration there are often multiple nodes which may function
 as configuration sources. Configurations are initially retrieved once during
-initializtion but may also be fetched later on typically when an error condition
+initialization but may also be fetched later on typically when an error condition
 is detected by the library or when the cluster topology changes. In such
 situations the behavior is to start fetching the configuration from each
 node in the list, in sequence. If the retrieval of the config from the first
