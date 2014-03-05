@@ -1928,9 +1928,119 @@ and may start being used for data operations.
 If an error occurs during configuration it will be relayed via the
 `error_callback`.
 
-_Note that the `error_callback` and `configuration_callback`
+_Note that the `error\_callback` and `configuration\_callback`
 handlers are not specific to the initial connection phase and may be invoked
 any time the library receives a new configuration or experiences errors
 in the configuration; so be sure to set an internal flag checking whether this
 is the first time either of the callbacks were invoked if you are relying on 
 this for initial connection notifications_.
+
+### Writing your own I/O Backend
+
+You may also author your own IO backend or I/O plugin. You can choose between
+the simpler event-based interface or the more complex buffer-based interface.
+
+Which interface you employ depends on the environments you are working with.
+Typically most libraries will employ the event-based interface which follows
+the normal `select()` or `poll()` model where a socket is polled for read
+or write ability and is then dispatched to a handler which performs the actual
+I/O operations.
+
+Some event systems (notably _UV_, Windows' IOCP and others) use a buffer-based
+completion model wherein sockets are submitted operations to perform on a
+buffer (particularly read in the buffer and write from it).
+
+This section assumes you have some understanding of asynchronous I/O.
+
+The IOPS interface is defined in `<libcouchbase/types.h>`
+
+#### Event Model
+
+In the event model you are presented with opaque 'event' structures which
+contain information about:
+
+1. What events to watch for
+2. What to do when said events take place
+
+A sample event structure may look like this:
+
+```C
+struct my_event {
+	int sockfd; /** Socket to poll on */
+	short events; /** Mask of events to watch */
+	/** callback to invoke when ready */
+	void (*callback)(int sockfd, short events, void *arg);
+	/** Argument to pass to callback */
+	void *cbarg;}
+```
+
+In concept this is similar to the `pollfd` structure (see `poll(2)`).
+
+The lifecycle for events takes place as follows:
+
+1. An event structure's memory is first allocated. This is done by a call
+   to `create_event()`.
+
+2. The structure is paired with a socket, event, callback and data. When
+   the event is ready, the callback is invoked with those parameters. This
+   is done via the `update_event()` call. Note the `void *` pointer in the
+   callback signature. This is how the library is able to associate a given
+   socket/event with an internal structure of its own.
+
+3. The polling for events is stopped for the specified socket via the
+   `delete_event()` call. This undoes anything performed by the `update_event`
+   call
+
+4. When the event structure is no longer needed, it is destroyed (and its
+   memory resources freed) via `destroy_event`.
+
+
+Note that the most common calls will be to `update_event` and `delete_event`
+and thus plugins should optimize for these.
+
+The events may be a mask of `LCB_READ_EVENT` and `LCB_WRITE_EVENT`; these
+have the same semantics as `POLLIN` and `POLLOUT` respectively. If an error
+takes place on a socket, the `LCB_ERROR_EVENT` flag may be _output_ as well.
+
+When an event is ready, the callback is to be invoked specifying the mask
+of the events which _actually took place_, for example if `update_event()`
+was called with `LCB_READ_EVENT|LCB_WRITE_EVENT` but the socket was only
+available for writing, then the callback is only invoked with
+`LCB_WRITE_EVENT`.
+
+Note that the library will call `update_event()` whenever it wishes to
+receive an event. The registration should be considered cleared (i.e
+as if `delete_event` is called) right before the callback is to be
+invoked, thus e.g.
+
+```C
+void send_events(my_event *event, short events)
+{
+	delete_event(my_event);
+	my_event->allback(my_event->sockfd, events, my_event->arg);
+}
+```
+
+##### I/O Operations
+
+The IOPS structure for the 'event' model contains function pointers for
+basic I/O operations like `send`, `recv`, etc.
+
+The semantics of these operations are identical to those functions of the
+corresponding name within the Berkeley Socket API. Some of the naming might
+be a bit different, for example `sendv` does not exist in the BSD socket APIs
+and is typically implemented as `sendmsg` (Portable) or `writev` (POSIX only).
+
+These operations are also passed the Plugin Instance itself as their first
+argument. If your plugin just proxies to OS calls then you may ignore it in
+those functions.
+
+##### Timer Operations
+
+Timer operations determine that a callback will be invoked after a specific
+amount of time has elapsed. The interval itself is measured in microseconds.
+
+The signature of the timer callback is the same as the event callback, except
+that the socket and event arguments are ignored. Timers are considered
+non-repeating and thus once a timer callback has been delivered it should not
+be delivered again until `update_timer` has been called.
